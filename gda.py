@@ -18,15 +18,33 @@ from random import choice
 class Root_widget(Scatter):
     def __init__(self, **kwargs):
         super(Root_widget, self).__init__(**kwargs)
+        self.time_interval = 60
         Clock.schedule_once(self.foto)
+        self.total_up_time = 0
         self.count = 0
-        Clock.schedule_interval(self.foto, 30)
+        self._keyboard = Window.request_keyboard(self._keyboard_closed, self)
+        self._keyboard.bind(on_key_down=self._on_keyboard_down)
+        self.foto_interval = Clock.schedule_interval(
+            self.foto, self.time_interval)
         Clock.schedule_interval(self.crono, 1)
+
+    def _keyboard_closed(self):
+        self._keyboard.unbind(on_key_down=self._on_keyboard_down)
+        self._keyboard = None
+
+    def _on_keyboard_down(self, keyboard, keycode, text, modifiers):
+        if keycode[1] == 'n':
+            self.count = 0
+            self.foto(self.time_interval)
+            self.foto_interval.cancel()
+            self.foto_interval()
 
     def crono(self, dt):
 
-        self.ids.cronometro.text = str(30 - self.count % 30)
+        self.ids.cronometro.text = str(
+            self.time_interval - self.count % self.time_interval)
         self.count += 1
+        self.total_up_time += 1
 
     def foto(self, dt):
 
@@ -43,7 +61,7 @@ class gdaApp(App):
     def on_request_close(self, *args):
 
         self.text_popup(title='Práctica', text='Tiempo: ' +
-                        str(self.view.count // 60) + 'minutos')
+                        str(self.view.total_up_time // 60) + 'minutos')
 
         return True
 
